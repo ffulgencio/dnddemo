@@ -92,7 +92,7 @@ function App() {
           <h2>{route.id}</h2>
           <ProductTable>
             {route.shipments.map((item, i) => (
-              <DraggableRow key={i} id={item.id} index={i}>
+              <DraggableRow key={item.id} id={item.id} index={i}>
                 <Row item={item} />
               </DraggableRow>
             ))}
