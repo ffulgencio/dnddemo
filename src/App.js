@@ -6,12 +6,26 @@ import DraggableRow from "./components/DraggableRow";
 import Row from "./components/Row";
 import OldProductTable from "./components/OldProductTable";
 
-const datos = [
-  { id: "1", nombre: "Guillermo", descripcion: "descripcion", precio: 20.88 },
-  { id: "2", nombre: "Maria", descripcion: "descripcion", precio: 20.88 },
-  { id: "3", nombre: "Antonio", descripcion: "descripcion", precio: 20.88 },
-  { id: "4", nombre: "José", descripcion: "descripcion", precio: 20.88 },
-  { id: "5", nombre: "Manuel", descripcion: "descripcion", precio: 20.88 },
+const routesMock = [
+  {
+    id: "Ruta1",
+    shipments: [
+      {
+        id: "1",
+        nombre: "Guillermo",
+        descripcion: "descripcion",
+        precio: 20.88,
+      },
+      { id: "2", nombre: "Maria", descripcion: "descripcion", precio: 20.88 },
+      { id: "3", nombre: "Antonio", descripcion: "descripcion", precio: 20.88 },
+      { id: "4", nombre: "José", descripcion: "descripcion", precio: 20.88 },
+      { id: "5", nombre: "Manuel", descripcion: "descripcion", precio: 20.88 },
+    ],
+  },
+  {
+    id: "Ruta2",
+    shipments: [],
+  },
 ];
 
 function reOrder(items, initialPos, endPos) {
@@ -22,52 +36,70 @@ function reOrder(items, initialPos, endPos) {
 }
 
 function App() {
-  const [aspirantes, setAspirantes] = useState(datos);
-  const [noAspirantes, setNoAspirantes] = useState([]);
-  return (
-    <DragDropContext
-      onDragEnd={(result) => {
-        const { source, destination } = result
-        console.log(result);
-        if (source.droppableId == destination.droppableId) {
-          setAspirantes((prev) => {
-            const valor = reOrder(prev, source.index, destination.index);
-            //console.log(valor);
-            return valor;
-          });
-          // setNoAspirantes((prev) => {
-          //   const valor = reOrder(prev, source.index, destination.index);
-          //   //console.log(valor);
-          //   return valor;
-          // });
-        }else{
-          
-          setNoAspirantes(prev=>{
-            return [...prev,aspirantes[source.index]]
-          })
-          setAspirantes(prev => prev.filter(x =>x.id !== aspirantes[source.index].id));
+  const [routes, setRoutes] = useState([...routesMock]);
+
+  const handleOnDragEnd = (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    if (source.droppableId !== destination.droppableId) {
+      const sourceRoute = routes.filter((x) => x.id == source.droppableId)[0];
+      const destinationRoute = routes.filter(
+        (x) => x.id == destination.droppableId
+      )[0];
+      const sourceShipments = [...sourceRoute.shipments];
+      const destinationShipments = [...destinationRoute.shipments];
+      const [removed] = sourceShipments.splice(source.index, 1);
+      destinationShipments.splice(destination.index, 0, removed);
+      setRoutes((prev) => [
+        ...prev.map((route, i) => {
+          if (route.id == sourceRoute.id)
+          return {
+            id: sourceRoute.id,
+            shipments: [...sourceShipments],
+          }
+          if (route.id == destinationRoute.id)
+        return {
+          id: destinationRoute.id,
+          shipments: [...destinationShipments],
         }
-      }}
-    >
-      <DroppableTable droppableId={"productTable"}>
-        <ProductTable>
-          {aspirantes.map((item, i) => (
-            <DraggableRow key={i} id={"productTable"+item.id} index={i}>
-              <Row item={item} />
-            </DraggableRow>
-          ))}
-        </ProductTable>
-      </DroppableTable>
-      <br />
-      <DroppableTable droppableId={"OldproductTable"}>
-        <OldProductTable>
-          {noAspirantes.map((item, i) => (
-            <DraggableRow key={i} id={"OldproductTable"+item.id} index={i}>
-              <Row item={item} />
-            </DraggableRow>
-          ))}
-        </OldProductTable>
-      </DroppableTable>
+        return route
+      })
+      ]);
+    } else {
+      const sourceRoute = routes.filter((x) => x.id == source.droppableId)[0];
+      const copiedShipments = [...sourceRoute.shipments];
+      const [removed] = copiedShipments.splice(source.index, 1);
+      copiedShipments.splice(destination.index, 0, removed);
+
+      setRoutes((prev) =>
+        [
+          ...prev.map((route, i) => {
+            if (route.id == sourceRoute.id) {
+              return {id: sourceRoute.id, shipments: [...copiedShipments]};
+            }
+            return route
+          }),
+        ]
+        
+      );
+    }
+  };
+
+  return (
+    <DragDropContext onDragEnd={handleOnDragEnd}>
+      {routes.map((route, i) => (
+        <DroppableTable key={i} droppableId={route.id}>
+          <h2>{route.id}</h2>
+          <ProductTable>
+            {route.shipments.map((item, i) => (
+              <DraggableRow key={i} id={item.id} index={i}>
+                <Row item={item} />
+              </DraggableRow>
+            ))}
+          </ProductTable>
+          <br />
+        </DroppableTable>
+      ))}
     </DragDropContext>
   );
 }
